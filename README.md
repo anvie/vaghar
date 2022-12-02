@@ -1,6 +1,6 @@
 # Vaghar
 
-Passphrase bruteforcer
+Multicore passphrase hunter
 
 **Usage:**
 

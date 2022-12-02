@@ -1,4 +1,3 @@
-
 use bitcoin::network::constants::Network;
 use bitcoin::util::bip32::ExtendedPrivKey;
 use secp256k1::Secp256k1;
@@ -6,7 +5,6 @@ use std::convert::TryFrom;
 use std::convert::TryInto;
 
 use anyhow::Result;
-
 
 // arg_enum! {
 //     #[derive(Debug, Clone, Copy)]
@@ -64,12 +62,7 @@ impl TryFrom<Bip44DerivationPath> for bitcoin::util::bip32::DerivationPath {
 
 impl std::fmt::Display for Bip44DerivationPath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "m/44'/{}'/{}'",
-            self.coin_type,
-            self.account
-        )?;
+        write!(f, "m/44'/{}'/{}'", self.coin_type, self.account)?;
         if let Some(change) = self.change {
             write!(f, "/{}", change)?;
         } else {

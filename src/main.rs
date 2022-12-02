@@ -198,7 +198,8 @@ fn main() {
                 // }
 
                 // if !p.iter().all(|item| tokens1_needed.contains(item)){
-                if tokens1_needed.iter().all(|item| !p.contains(&item)) {
+                if tokens1_needed.len() > 0 && tokens1_needed.iter().all(|item| !p.contains(&item))
+                {
                     println!("ignored1: {}", tokenizer.to_words(&p).join(" "));
                     return;
                 }
@@ -210,7 +211,9 @@ fn main() {
                     .par_bridge()
                     .for_each(|mut c2| {
                         c2.permutation().for_each(|p2| {
-                            if !p2.iter().any(|item| tokens2_needed.contains(item)) {
+                            if tokens2_needed.len() > 0
+                                && !p2.iter().any(|item| tokens2_needed.contains(item))
+                            {
                                 println!("ignored2: {}", tokenizer.to_words(&p2).join(" "));
                                 return;
                             }
@@ -220,7 +223,9 @@ fn main() {
                                 .par_bridge()
                                 .for_each(|mut c3| {
                                     c3.permutation().for_each(|p3| {
-                                        if !p3.iter().any(|item| tokens3_needed.contains(item)) {
+                                        if tokens3_needed.len() > 0
+                                            && !p3.iter().any(|item| tokens3_needed.contains(item))
+                                        {
                                             // println!("ignored3: {}", tokenizer.to_words(&p3).join(" "));
                                             return;
                                         }
@@ -228,10 +233,14 @@ fn main() {
                                         tokens4.combination(config.group).par_bridge().for_each(
                                             |mut c4| {
                                                 c4.permutation().for_each(|p4| {
-                                                    // if !p4.iter().any(|item| tokens4_needed.contains(item)) {
-                                                    //     // println!("ignored4: {}", tokenizer.to_words(&p4).join(" "));
-                                                    //     return;
-                                                    // }
+                                                    if tokens4_needed.len() > 0
+                                                        && !p4.iter().any(|item| {
+                                                            tokens4_needed.contains(item)
+                                                        })
+                                                    {
+                                                        // println!("ignored4: {}", tokenizer.to_words(&p4).join(" "));
+                                                        return;
+                                                    }
 
                                                     let passphrase = format!(
                                                         "{} {} {} {}",

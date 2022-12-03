@@ -49,10 +49,14 @@ struct Config {
     words2: String,
     words3: String,
     words4: String,
+    words5: String,
+    words6: String,
     words1_needed: String,
     words2_needed: String,
     words3_needed: String,
     words4_needed: String,
+    words5_needed: String,
+    words6_needed: String,
     target: String,
 }
 
@@ -108,12 +112,16 @@ fn main() {
     let words2 = config.words2.split_whitespace().collect::<Vec<&str>>();
     let words3 = config.words3.split_whitespace().collect::<Vec<&str>>();
     let words4 = config.words4.split_whitespace().collect::<Vec<&str>>();
+    let words5 = config.words5.split_whitespace().collect::<Vec<&str>>();
+    let words6 = config.words6.split_whitespace().collect::<Vec<&str>>();
 
     let mut tokenizer = Tokenizer::new();
     let tokens1 = tokenizer.tokenize(words1);
     let tokens2 = tokenizer.tokenize(words2);
     let tokens3 = tokenizer.tokenize(words3);
     let tokens4 = tokenizer.tokenize(words4);
+    let tokens5 = tokenizer.tokenize(words5);
+    let tokens6 = tokenizer.tokenize(words6);
 
     let mut tokens_all = tokens1
         .clone()
@@ -157,6 +165,18 @@ fn main() {
     let tokens4_needed = tokenizer.tokenize(
         config
             .words4_needed
+            .split_whitespace()
+            .collect::<Vec<&str>>(),
+    );
+    let tokens5_needed = tokenizer.tokenize(
+        config
+            .words5_needed
+            .split_whitespace()
+            .collect::<Vec<&str>>(),
+    );
+    let tokens6_needed = tokenizer.tokenize(
+        config
+            .words6_needed
             .split_whitespace()
             .collect::<Vec<&str>>(),
     );
@@ -226,7 +246,7 @@ fn main() {
                                         if tokens3_needed.len() > 0
                                             && !p3.iter().any(|item| tokens3_needed.contains(item))
                                         {
-                                            // println!("ignored3: {}", tokenizer.to_words(&p3).join(" "));
+                                            println!("ignored3: {}", tokenizer.to_words(&p3).join(" "));
                                             return;
                                         }
 
@@ -238,104 +258,131 @@ fn main() {
                                                             tokens4_needed.contains(item)
                                                         })
                                                     {
-                                                        // println!("ignored4: {}", tokenizer.to_words(&p4).join(" "));
+                                                        println!("ignored4: {}", tokenizer.to_words(&p4).join(" "));
                                                         return;
                                                     }
 
-                                                    let passphrase = format!(
-                                                        "{} {} {} {}",
-                                                        tokenizer.to_words(&p).join(" "),
-                                                        tokenizer.to_words(&p2).join(" "),
-                                                        tokenizer.to_words(&p3).join(" "),
-                                                        tokenizer.to_words(&p4).join(" "),
-                                                    );
-                                                    // println!("{}", passphrase);
+                                                    tokens5.combination(config.group).par_bridge().for_each(|mut c5|{
+                                                        
+                                                        c5.permutation().for_each(|p5|{
+                                                            if tokens5_needed.len() > 0
+                                                            && !p5.iter().any(|item| {
+                                                                tokens5_needed.contains(item)
+                                                            })
+                                                        {
+                                                            // println!("ignored5: {}", tokenizer.to_words(&p5).join(" "));
+                                                            return;
+                                                        }
 
-                                                    // validate the passphrase
-                                                    match Mnemonic::validate(
-                                                        &passphrase,
-                                                        Language::English,
-                                                    ) {
-                                                        Ok(()) => {
-                                                            // println!("VALID {}", passphrase);
+                                                        tokens6.combination(config.group).par_bridge().for_each(|mut c6|{
+                                                            c6.permutation().for_each(|p6|{
+                                                                if tokens6_needed.len() > 0
+                                                                && !p6.iter().any(|item| {
+                                                                    tokens6_needed.contains(item)
+                                                                })
+                                                            {
+                                                                // println!("ignored6: {}", tokenizer.to_words(&p6).join(" "));
+                                                                return;
+                                                            }
 
-                                                            let mnemonic = Mnemonic::from_phrase(
+
+                                                            let passphrase = format!(
+                                                                "{} {} {} {} {} {}",
+                                                                tokenizer.to_words(&p).join(" "),
+                                                                tokenizer.to_words(&p2).join(" "),
+                                                                tokenizer.to_words(&p3).join(" "),
+                                                                tokenizer.to_words(&p4).join(" "),
+                                                                tokenizer.to_words(&p5).join(" "),
+                                                                tokenizer.to_words(&p6).join(" "),
+                                                            );
+                                                        
+                                                            // validate the passphrase
+                                                            match Mnemonic::validate(
                                                                 &passphrase,
                                                                 Language::English,
-                                                            )
-                                                            .unwrap();
-                                                            let seed = Seed::new(&mnemonic, "");
-
-                                                            let seed =
-                                                                HDPrivKey::new(&seed.as_bytes())
+                                                            ) {
+                                                                Ok(()) => {
+                                                                    // println!("VALID {}", passphrase);
+        
+                                                                    let mnemonic = Mnemonic::from_phrase(
+                                                                        &passphrase,
+                                                                        Language::English,
+                                                                    )
                                                                     .unwrap();
-                                                            let derived = seed
-                                                                .derive(Bip44DerivationPath {
-                                                                    coin_type: 60,
-                                                                    account: 0,
-                                                                    change: Some(0),
-                                                                    address_index: Some(0),
-                                                                })
-                                                                .unwrap();
-                                                            let secp_key = SecretKey::from_slice(
-                                                                &derived.key_part(),
-                                                            )
-                                                            .unwrap();
-
-                                                            let ethereum_private_key =
-                                        EthereumPrivateKey::from_secp256k1_secret_key(secp_key);
-                                                            let address = ethereum_private_key
-                                                                .to_address(
-                                                                    &EthereumFormat::Standard,
-                                                                )
-                                                                .unwrap();
-
-                                                            // println!("{} {}\n   - {}", counter.read().unwrap(), address, passphrase);
-
-                                                            if address == target {
-                                                                let counter =
-                                                                    counter.read().unwrap();
-                                                                println!(
-                                                                    "FOUND! {} {}",
-                                                                    counter, passphrase
-                                                                );
-                                                                exit(0);
+                                                                    let seed = Seed::new(&mnemonic, "");
+        
+                                                                    let seed =
+                                                                        HDPrivKey::new(&seed.as_bytes())
+                                                                            .unwrap();
+                                                                    let derived = seed
+                                                                        .derive(Bip44DerivationPath {
+                                                                            coin_type: 60,
+                                                                            account: 0,
+                                                                            change: Some(0),
+                                                                            address_index: Some(0),
+                                                                        })
+                                                                        .unwrap();
+                                                                    let secp_key = SecretKey::from_slice(
+                                                                        &derived.key_part(),
+                                                                    )
+                                                                    .unwrap();
+        
+                                                                    let ethereum_private_key =
+                                                                        EthereumPrivateKey::from_secp256k1_secret_key(secp_key);
+                                                                    let address = ethereum_private_key
+                                                                        .to_address(
+                                                                            &EthereumFormat::Standard,
+                                                                        )
+                                                                        .unwrap();
+        
+                                                                    // println!("{} {}\n   - {}", counter.read().unwrap(), address, passphrase);
+        
+                                                                    if address == target {
+                                                                        let counter =
+                                                                            counter.read().unwrap();
+                                                                        println!(
+                                                                            "FOUND! {} {}",
+                                                                            counter, passphrase
+                                                                        );
+                                                                        exit(0);
+                                                                    }
+                                                                }
+                                                                Err(err) => (),
                                                             }
-                                                        }
-                                                        Err(err) => (),
-                                                    }
+        
+                                                            // increase counter
+                                                            {
+                                                                let mut counter = counter.write().unwrap();
+                                                                *counter += 1;
+                                                            }
+        
+                                                            {
+                                                                let mut calc_per_second =
+                                                                    calc_per_second.lock().unwrap();
+                                                                *calc_per_second += 1;
+        
+                                                                let mut lasttime = lasttime.lock().unwrap();
+                                                                if lasttime.elapsed()
+                                                                    > Duration::from_secs(1)
+                                                                {
+                                                                    *lasttime = Instant::now();
+                                                                    let counter = counter.read().unwrap();
+                                                                    println!("speed: {0:}/s - last: {2:} - processed: {1: <10}",calc_per_second, *counter, passphrase);
+                                                                    *calc_per_second = 0;
+                                                                }
+                                                            }
+                                                        });
+                                                    });
 
-                                                    // increase counter
-                                                    {
-                                                        let mut counter = counter.write().unwrap();
-                                                        *counter += 1;
-                                                    }
-
-                                                    {
-                                                        let mut calc_per_second =
-                                                            calc_per_second.lock().unwrap();
-                                                        *calc_per_second += 1;
-
-                                                        let mut lasttime = lasttime.lock().unwrap();
-                                                        if lasttime.elapsed()
-                                                            > Duration::from_secs(1)
-                                                        {
-                                                            *lasttime = Instant::now();
-                                                            let counter = counter.read().unwrap();
-                                                            println!(
-                                        "speed: {0:}/s - last: {2:} - processed: {1: <10}",
-                                        calc_per_second, *counter, passphrase
-                                    );
-                                                            *calc_per_second = 0;
-                                                        }
-                                                    }
                                                 });
                                             },
                                         )
                                     });
                                 });
+                             });
                         });
                     });
+                });
 
                 // counter += 1;
             });

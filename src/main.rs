@@ -102,8 +102,6 @@ fn main() {
 
     println!("Config: {:#?}", config);
 
-    // exit(0);
-
     let words1 = config.words1.split_whitespace().collect::<Vec<&str>>();
     let words2 = config.words2.split_whitespace().collect::<Vec<&str>>();
     let words3 = config.words3.split_whitespace().collect::<Vec<&str>>();
@@ -129,12 +127,8 @@ fn main() {
     // println!("Tokens1: {:#?}", tokens1);
     // println!("Tokens2: {:#?}", tokens2);
 
-    // let tokens1 = to_tokens(words1);
-
     // println!("Words1: {:#?}", words1);
     // println!("Words2: {:#?}", words2);
-
-    // let mut tokens1 = &[1, 2, 3, 4, 5, 6];
 
     let tokens1_needed = tokenizer.tokenize(
         config
@@ -161,10 +155,9 @@ fn main() {
             .collect::<Vec<&str>>(),
     );
 
-    // let target:EthereumAddress = "0x2EA4400F5C66B7B810D46d2F5649966D64a402dB".parse().unwrap();
     let target: EthereumAddress = target.parse().unwrap();
 
-    let counter = RwLock::new(0);
+    let counter: RwLock<u64> = RwLock::new(0);
     let lasttime = Mutex::new(Instant::now());
     let calc_per_second = Mutex::new(0);
     tokens1
@@ -172,39 +165,11 @@ fn main() {
         .par_bridge()
         .for_each(|mut c| {
             c.permutation().for_each(|p| {
-                // if !p.iter().take(6).all(|item| tokens1.contains(item))
-                //     || !p.iter().skip(6).all(|item| tokens2.contains(item))
-                // {
-                //     // println!(
-                //     //     "Not all tokens2 in last 6: {}",
-                //     //     tokenizer
-                //     //         .to_words(&p.clone().into_iter().skip(6).collect::<Vec<&u32>>())
-                //     //         .join(" ")
-                //     // );
-                //     {
-                //         let mut calc_per_second = calc_per_second.lock().unwrap();
-                //         *calc_per_second += 1;
-
-                //         let mut lasttime = lasttime.lock().unwrap();
-                //         if lasttime.elapsed() > Duration::from_secs(1) {
-                //             *lasttime = Instant::now();
-                //             let counter = counter.read().unwrap();
-                //             let passphrase = tokenizer.to_words(&p).join(" ");
-                //             println!("speed: {0:}/s - last: {2:} - processed: {1: <10}", calc_per_second, *counter, passphrase);
-                //             *calc_per_second = 0;
-                //         }
-                //     }
-                //     return;
-                // }
-
-                // if !p.iter().all(|item| tokens1_needed.contains(item)){
                 if tokens1_needed.len() > 0 && tokens1_needed.iter().all(|item| !p.contains(&item))
                 {
                     println!("ignored1: {}", tokenizer.to_words(&p).join(" "));
                     return;
                 }
-
-                // let passphrase = tokenizer.to_words(&p).join(" ");
 
                 tokens2
                     .combination(config.group)
@@ -336,16 +301,10 @@ fn main() {
                                 });
                         });
                     });
-
-                // counter += 1;
             });
         });
     let counter = counter.read().unwrap();
+
     println!("Total permutations: {}", *counter - 1);
-
-    // let words1_back = tokenizer.to_words(tokens1);
-    // let words2_back = tokenizer.to_words(tokens2);
-
-    // println!("Words1: {:#?}", words1_back);
-    // println!("Words2: {:#?}", words2_back);
+    println!("Done.");
 }

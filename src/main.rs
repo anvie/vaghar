@@ -40,6 +40,8 @@ use bip32::{Bip44DerivationPath, HDPrivKey};
 struct Args {
     #[arg(short, long, default_value = "default.conf")]
     config: String,
+
+
 }
 
 #[derive(Deserialize, Debug)]
@@ -192,30 +194,6 @@ fn main() {
         .par_bridge()
         .for_each(|mut c| {
             c.permutation().for_each(|p| {
-                // if !p.iter().take(6).all(|item| tokens1.contains(item))
-                //     || !p.iter().skip(6).all(|item| tokens2.contains(item))
-                // {
-                //     // println!(
-                //     //     "Not all tokens2 in last 6: {}",
-                //     //     tokenizer
-                //     //         .to_words(&p.clone().into_iter().skip(6).collect::<Vec<&u32>>())
-                //     //         .join(" ")
-                //     // );
-                //     {
-                //         let mut calc_per_second = calc_per_second.lock().unwrap();
-                //         *calc_per_second += 1;
-
-                //         let mut lasttime = lasttime.lock().unwrap();
-                //         if lasttime.elapsed() > Duration::from_secs(1) {
-                //             *lasttime = Instant::now();
-                //             let counter = counter.read().unwrap();
-                //             let passphrase = tokenizer.to_words(&p).join(" ");
-                //             println!("speed: {0:}/s - last: {2:} - processed: {1: <10}", calc_per_second, *counter, passphrase);
-                //             *calc_per_second = 0;
-                //         }
-                //     }
-                //     return;
-                // }
 
                 // if !p.iter().all(|item| tokens1_needed.contains(item)){
                 if tokens1_needed.len() > 0 && tokens1_needed.iter().all(|item| !p.contains(&item))
@@ -363,7 +341,7 @@ fn main() {
         
                                                                 let mut lasttime = lasttime.lock().unwrap();
                                                                 if lasttime.elapsed()
-                                                                    > Duration::from_secs(1)
+                                                                    > Duration::from_millis(100)
                                                                 {
                                                                     *lasttime = Instant::now();
                                                                     let counter = counter.read().unwrap();
